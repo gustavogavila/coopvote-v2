@@ -16,6 +16,9 @@ public class Agenda {
     @NotBlank
     private String description;
 
+    public Agenda() {
+    }
+
     public Agenda(String description) {
         this.description = description;
     }
