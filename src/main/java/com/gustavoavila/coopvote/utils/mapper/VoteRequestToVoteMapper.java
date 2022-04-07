@@ -8,6 +8,6 @@ import org.springframework.stereotype.Component;
 public class VoteRequestToVoteMapper implements CoopVoteMapper<VoteRequest, Vote> {
     @Override
     public Vote transform(VoteRequest source) {
-        return new Vote(source.getAssociateCPF(), source.getVoteValue(), source.getAgenda());
+        return new Vote(source.getAssociateCPF(), source.getVoteValue());
     }
 }

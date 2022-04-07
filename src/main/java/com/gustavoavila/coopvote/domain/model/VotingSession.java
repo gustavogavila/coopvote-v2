@@ -1,9 +1,13 @@
 package com.gustavoavila.coopvote.domain.model;
 
+import com.gustavoavila.coopvote.domain.exceptions.VotingSessionClosedException;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 
 import static java.util.Objects.nonNull;
 
@@ -24,8 +28,9 @@ public class VotingSession {
     private OffsetDateTime sessionOpeningTime;
     private OffsetDateTime sessionClosingTime;
 
-    @ManyToOne
-    private Agenda agenda;
+    @OneToMany
+    @JoinColumn(name = "voting_session_id")
+    private List<Vote> votes = new ArrayList<>();
 
     public VotingSession() {
     }
@@ -38,7 +43,6 @@ public class VotingSession {
         this.status = StatusVotingSession.OPENED;
         this.sessionOpeningTime = OffsetDateTime.now();
         this.sessionClosingTime = this.sessionOpeningTime.plus(this.durationInMinutes, ChronoUnit.MINUTES);
-        System.out.println("Teste");
     }
 
     public void close() {
@@ -49,15 +53,18 @@ public class VotingSession {
         this.durationInMinutes = durationInMinutes;
     }
 
-    public void setAgenda(Agenda agenda) {
-        this.agenda = agenda;
-    }
-
     public OffsetDateTime getSessionClosingTime() {
         return sessionClosingTime;
     }
 
     public Long getId() {
         return id;
+    }
+
+    public void addVote(Vote vote) throws VotingSessionClosedException {
+        if (this.status.equals(StatusVotingSession.CLOSED)) {
+            throw new VotingSessionClosedException("This voting session is now closed");
+        }
+        this.votes.add(vote);
     }
 }

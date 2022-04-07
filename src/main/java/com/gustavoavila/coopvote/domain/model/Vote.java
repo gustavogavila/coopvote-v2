@@ -18,15 +18,11 @@ public class Vote {
     @Enumerated(EnumType.STRING)
     private VoteValue voteValue;
 
-    @ManyToOne
-    private Agenda agenda;
-
     public Vote() {
     }
 
-    public Vote(String associateCPF, VoteValue voteValue, Agenda agenda) {
+    public Vote(String associateCPF, VoteValue voteValue) {
         this.associateCPF = associateCPF;
         this.voteValue = voteValue;
-        this.agenda = agenda;
     }
 }
