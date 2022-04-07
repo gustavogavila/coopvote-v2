@@ -13,8 +13,6 @@ public class VoteRequest {
     @NotNull
     private VoteValue voteValue;
 
-    private Agenda agenda;
-
     public VoteRequest(String associateCPF, VoteValue voteValue) {
         this.associateCPF = associateCPF;
         this.voteValue = voteValue;
@@ -26,13 +24,5 @@ public class VoteRequest {
 
     public VoteValue getVoteValue() {
         return voteValue;
-    }
-
-    public void setAgenda(Agenda agenda) {
-        this.agenda = agenda;
-    }
-
-    public Agenda getAgenda() {
-        return agenda;
     }
 }

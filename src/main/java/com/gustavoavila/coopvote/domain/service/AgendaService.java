@@ -61,7 +61,7 @@ public class AgendaService {
 
     private Agenda findAgendaById(Long agendaId) throws AgendaNotFoundException {
         return repository.findById(agendaId)
-                .orElseThrow(() -> new AgendaNotFoundException("Agenda not found"));
+                .orElseThrow(() -> new AgendaNotFoundException(agendaId));
     }
 
     @Async
@@ -95,7 +95,7 @@ public class AgendaService {
     private void verifyDuplicatedVote(VoteRequest voteRequest, Agenda agenda) throws DuplicatedVoteException {
         Optional<List<Vote>> possibleVote = voteRepository.findByAssociateCPFAndAgenda(voteRequest.getAssociateCPF(), agenda.getId());
         if (possibleVote.isPresent() && !possibleVote.get().isEmpty()) {
-            throw new DuplicatedVoteException("The associate has already voted on this agenda");
+            throw new DuplicatedVoteException();
         }
     }
 

@@ -63,7 +63,7 @@ public class VotingSession {
 
     public void addVote(Vote vote) throws VotingSessionClosedException {
         if (this.status.equals(StatusVotingSession.CLOSED)) {
-            throw new VotingSessionClosedException("This voting session is now closed");
+            throw new VotingSessionClosedException();
         }
         this.votes.add(vote);
     }
