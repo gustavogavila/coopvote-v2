@@ -25,4 +25,8 @@ public class Vote {
         this.associateCPF = associateCPF;
         this.voteValue = voteValue;
     }
+
+    public VoteValue getVoteValue() {
+        return voteValue;
+    }
 }

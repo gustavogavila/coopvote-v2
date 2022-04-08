@@ -1,8 +1,6 @@
 package com.gustavoavila.coopvote.api.controller.exceptionhandler;
 
-import com.gustavoavila.coopvote.domain.exceptions.AgendaNotFoundException;
-import com.gustavoavila.coopvote.domain.exceptions.DuplicatedVoteException;
-import com.gustavoavila.coopvote.domain.exceptions.VotingSessionClosedException;
+import com.gustavoavila.coopvote.domain.exceptions.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,15 +24,29 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(DuplicatedVoteException.class)
     public ResponseEntity<?> handleDuplicatedVoteException(DuplicatedVoteException ex, WebRequest webRequest) {
-        HttpStatus status = HttpStatus.NOT_FOUND;
+        HttpStatus status = HttpStatus.BAD_REQUEST;
         Problem problem = createProblem("Duplicate information", ex.getMessage(), status);
         return handleExceptionInternal(ex, problem, new HttpHeaders(), status, webRequest);
     }
 
     @ExceptionHandler(VotingSessionClosedException.class)
     public ResponseEntity<?> handleVotingSessionClosedException(VotingSessionClosedException ex, WebRequest webRequest) {
-        HttpStatus status = HttpStatus.NOT_FOUND;
+        HttpStatus status = HttpStatus.BAD_REQUEST;
         Problem problem = createProblem("Voting Session Closed", ex.getMessage(), status);
+        return handleExceptionInternal(ex, problem, new HttpHeaders(), status, webRequest);
+    }
+
+    @ExceptionHandler(VotingSessionNotFoundException.class)
+    public ResponseEntity<?> handleVotingSessionNotFoundException(VotingSessionNotFoundException ex, WebRequest webRequest) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        Problem problem = createProblem("Entity not found", ex.getMessage(), status);
+        return handleExceptionInternal(ex, problem, new HttpHeaders(), status, webRequest);
+    }
+
+    @ExceptionHandler(AgendaWithoutVotesException.class)
+    public ResponseEntity<?> handleAgendaWithouVotesException(AgendaWithoutVotesException ex, WebRequest webRequest) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        Problem problem = createProblem("Agenda without votes", ex.getMessage(), status);
         return handleExceptionInternal(ex, problem, new HttpHeaders(), status, webRequest);
     }
 

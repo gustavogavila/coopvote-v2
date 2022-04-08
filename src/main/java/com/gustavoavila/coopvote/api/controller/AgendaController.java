@@ -1,17 +1,13 @@
 package com.gustavoavila.coopvote.api.controller;
 
-import com.gustavoavila.coopvote.domain.exceptions.AgendaNotFoundException;
-import com.gustavoavila.coopvote.domain.exceptions.DuplicatedVoteException;
-import com.gustavoavila.coopvote.domain.exceptions.VotingSessionClosedException;
-import com.gustavoavila.coopvote.domain.model.AgendaRequest;
-import com.gustavoavila.coopvote.domain.model.VoteRequest;
-import com.gustavoavila.coopvote.domain.model.VotingResult;
-import com.gustavoavila.coopvote.domain.model.VotingSessionRequest;
+import com.gustavoavila.coopvote.domain.model.*;
 import com.gustavoavila.coopvote.domain.service.AgendaService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.Valid;
+import java.net.URI;
 
 @RestController
 @RequestMapping("agendas")
@@ -24,22 +20,29 @@ public class AgendaController {
     }
 
     @PostMapping
-    public void registerNewAgenda(@Valid @RequestBody AgendaRequest agendaRequest) {
-        agendaService.registerNewAgenda(agendaRequest);
+    public ResponseEntity<AgendaResponse> registerNewAgenda(@Valid @RequestBody AgendaRequest agendaRequest) {
+        AgendaResponse agenda = agendaService.registerNewAgenda(agendaRequest);
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(agenda.getId())
+                .toUri();
+        return ResponseEntity.created(location).body(agenda);
     }
 
     @PostMapping("{agendaId}/open-voting-session")
-    public void openVotingSession(@PathVariable Long agendaId, @RequestBody VotingSessionRequest votingSessionRequest) throws AgendaNotFoundException {
+    public void openVotingSession(@PathVariable Long agendaId, @RequestBody VotingSessionRequest votingSessionRequest) {
         agendaService.openVotingSession(agendaId, votingSessionRequest);
     }
 
     @PostMapping("{agendaId}/vote")
-    public void vote(@PathVariable Long agendaId, @Valid @RequestBody VoteRequest voteRequest) throws AgendaNotFoundException, DuplicatedVoteException, VotingSessionClosedException {
+    public void vote(@PathVariable Long agendaId, @Valid @RequestBody VoteRequest voteRequest) {
         agendaService.vote(agendaId, voteRequest);
     }
 
     @GetMapping("{agendaId}/voting-result")
-    public ResponseEntity<VotingResult> votingResult() {
-        return null;
+    public ResponseEntity<VotingResult> votingResult(@PathVariable Long agendaId) {
+        VotingResult votingResult = agendaService.votingResult(agendaId);
+        return ResponseEntity.ok(votingResult);
     }
 }

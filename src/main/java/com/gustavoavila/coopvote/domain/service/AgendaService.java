@@ -1,13 +1,15 @@
 package com.gustavoavila.coopvote.domain.service;
 
 import com.gustavoavila.coopvote.domain.exceptions.AgendaNotFoundException;
+import com.gustavoavila.coopvote.domain.exceptions.AgendaWithoutVotesException;
 import com.gustavoavila.coopvote.domain.exceptions.DuplicatedVoteException;
-import com.gustavoavila.coopvote.domain.exceptions.VotingSessionClosedException;
+import com.gustavoavila.coopvote.domain.exceptions.VotingSessionNotFoundException;
 import com.gustavoavila.coopvote.domain.model.*;
 import com.gustavoavila.coopvote.domain.repository.AgendaRepository;
 import com.gustavoavila.coopvote.domain.repository.VoteRepository;
 import com.gustavoavila.coopvote.domain.repository.VotingSessionRepository;
 import com.gustavoavila.coopvote.utils.mapper.AgendaRequestToAgendaMapper;
+import com.gustavoavila.coopvote.utils.mapper.AgendaToAgendaResponseMapper;
 import com.gustavoavila.coopvote.utils.mapper.VoteRequestToVoteMapper;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Async;
@@ -18,9 +20,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 
 @Service
 public class AgendaService {
@@ -30,26 +38,30 @@ public class AgendaService {
     private final VotingSessionRepository votingSessionRepository;
     private final VoteRequestToVoteMapper voteMapper;
     private final VoteRepository voteRepository;
+    private final AgendaToAgendaResponseMapper agendaResponseMapper;
 
     public AgendaService(AgendaRequestToAgendaMapper mapper,
                          AgendaRepository repository,
                          VotingSessionRepository votingSessionRepository,
                          VoteRequestToVoteMapper voteMapper,
-                         VoteRepository voteRepository) {
+                         VoteRepository voteRepository,
+                         AgendaToAgendaResponseMapper agendaResponseMapper) {
         this.mapper = mapper;
         this.repository = repository;
         this.votingSessionRepository = votingSessionRepository;
         this.voteMapper = voteMapper;
         this.voteRepository = voteRepository;
+        this.agendaResponseMapper = agendaResponseMapper;
     }
 
-    public void registerNewAgenda(AgendaRequest agendaRequest) {
+    public AgendaResponse registerNewAgenda(AgendaRequest agendaRequest) {
         Agenda agenda = mapper.transform(agendaRequest);
         repository.save(agenda);
+        return agendaResponseMapper.transform(agenda);
     }
 
     @Transactional
-    public void openVotingSession(Long agendaId, VotingSessionRequest votingSessionRequest) throws AgendaNotFoundException {
+    public void openVotingSession(Long agendaId, VotingSessionRequest votingSessionRequest) {
         Agenda agenda = findAgendaById(agendaId);
         VotingSession votingSession = new VotingSession(votingSessionRequest.getSessionTimeInMinutes());
         votingSessionRepository.save(votingSession);
@@ -59,7 +71,7 @@ public class AgendaService {
         closeVotingSession(votingSession);
     }
 
-    private Agenda findAgendaById(Long agendaId) throws AgendaNotFoundException {
+    private Agenda findAgendaById(Long agendaId) {
         return repository.findById(agendaId)
                 .orElseThrow(() -> new AgendaNotFoundException(agendaId));
     }
@@ -79,8 +91,7 @@ public class AgendaService {
     }
 
     @Transactional
-    public void vote(Long agendaId, VoteRequest voteRequest) throws AgendaNotFoundException, DuplicatedVoteException,
-            VotingSessionClosedException {
+    public void vote(Long agendaId, VoteRequest voteRequest) {
 
         Agenda agenda = findAgendaById(agendaId);
         verifyDuplicatedVote(voteRequest, agenda);
@@ -92,12 +103,43 @@ public class AgendaService {
         votingSessionRepository.save(votingSession);
     }
 
-    private void verifyDuplicatedVote(VoteRequest voteRequest, Agenda agenda) throws DuplicatedVoteException {
+    private void verifyDuplicatedVote(VoteRequest voteRequest, Agenda agenda) {
         Optional<List<Vote>> possibleVote = voteRepository.findByAssociateCPFAndAgenda(voteRequest.getAssociateCPF(), agenda.getId());
         if (possibleVote.isPresent() && !possibleVote.get().isEmpty()) {
             throw new DuplicatedVoteException();
         }
     }
 
+    public VotingResult votingResult(Long agendaId) {
+        Agenda agenda = findAgendaById(agendaId);
+        VotingSession votingSession = agenda.getVotingSession();
 
+        if (isNull(votingSession)) {
+            throw new VotingSessionNotFoundException();
+        }
+
+        List<Vote> votes = agenda.getVotingSession().getVotes();
+        Map<VoteValue, Long> collect = votes.stream().map(Vote::getVoteValue)
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+        Long numberNO = nonNull(collect.get(VoteValue.NO)) ? collect.get(VoteValue.NO) : 0L;
+        Long numberYES = nonNull(collect.get(VoteValue.YES)) ? collect.get(VoteValue.YES) : 0L;
+
+        FinalResult finalResult = calculateResult(numberYES, numberNO);
+
+        return new VotingResult(agenda.getDescription(), numberYES, numberNO, finalResult);
+    }
+
+    private FinalResult calculateResult(Long numberYES, Long numberNO) {
+        if (numberYES == 0L && numberNO == 0L) {
+            throw new AgendaWithoutVotesException();
+        }
+        if (numberYES > numberNO) {
+            return FinalResult.APPROVED;
+        }
+        if (numberYES < numberNO) {
+            return FinalResult.REJECTED;
+        }
+        return FinalResult.DRAW;
+    }
 }
