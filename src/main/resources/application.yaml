@@ -19,7 +19,7 @@ spring:
 
 server:
   servlet:
-    context-path: /api
+    context-path: api
 
 ---
 
@@ -35,4 +35,4 @@ spring:
 
 server:
   servlet:
-    context-path: /api
+    context-path: api
