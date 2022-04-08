@@ -1,13 +1,12 @@
 spring:
-#  profiles:
-#    active:
-#      - prod
+  profiles:
+    active:
+      - prod
 
   datasource:
     url: jdbc:postgresql://localhost:15432/coopvotedb
     username: postgres
     password: postgres
-  #    driver-class-name: org.postgresql.Driver
 
   jpa:
     show-sql: true
@@ -18,30 +17,22 @@ spring:
       hibernate:
         format_sql: true
 
-#spring:
-#  profiles: prod
-#
-#  datasource:
-#    url: ${JDBC_DATABASE_URL}
-#    username: ${JDBC_DATABASE_USERNAME}
-#    password: ${JDBC_DATABASE_PASSWORD}
-##    hikari:
-##      auto-commit: false
-#
-#  jpa:
-#    show-sql: true
-#    hibernate:
-#      ddl-auto: update
-#    database-platform: org.hibernate.dialect.PostgreSQLDialect
-#    properties:
-#      hibernate:
-#        format_sql: true
-##        jdbc.lob.non_contextual_creation: true
-##        connection:
-##          provider_disables_autocommit: true
-#
-##    open-in-view: false
-#
-#  data:
-#    rest:
-#      base-path: /api
+server:
+  servlet:
+    context-path: /api
+
+---
+
+spring:
+  profiles: prod
+
+  datasource:
+    url: ${JDBC_DATASOURCE_URL}
+
+  jpa:
+    show-sql: true
+    generate-ddl: true
+
+server:
+  servlet:
+    context-path: /api
