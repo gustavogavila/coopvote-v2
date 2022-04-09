@@ -74,7 +74,7 @@ public class AgendaService {
 
     private int getDurationInMinutesIfExist(VotingSessionRequest votingSessionRequest) {
         var durationInMinutes = 1;
-        if (nonNull(votingSessionRequest)) {
+        if (sessionTimeHasBeenReported(votingSessionRequest)) {
             durationInMinutes = votingSessionRequest.getSessionTimeInMinutes();
         }
         return durationInMinutes;
@@ -150,5 +150,9 @@ public class AgendaService {
             return FinalResult.REJECTED;
         }
         return FinalResult.DRAW;
+    }
+
+    private boolean sessionTimeHasBeenReported(VotingSessionRequest votingSessionRequest) {
+        return nonNull(votingSessionRequest) && nonNull(votingSessionRequest.getSessionTimeInMinutes());
     }
 }

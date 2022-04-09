@@ -5,11 +5,16 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
 
@@ -54,6 +59,18 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         HttpStatus status = HttpStatus.BAD_REQUEST;
         Problem problem = createProblem("Agenda without votes", ex.getMessage(), status);
         return handleExceptionInternal(ex, problem, new HttpHeaders(), status, webRequest);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
+                                                                  HttpHeaders headers,
+                                                                  HttpStatus status,
+                                                                  WebRequest webRequest) {
+
+        List<Problem.Field> problemFields = getProblemFields(ex);
+        Problem problem = createProblem("Invalid data", "One or more fields are invalid", status);
+        problem.setFieldsErrors(problemFields);
+        return handleExceptionInternal(ex, problem, headers, status, webRequest);
     }
 
     @ExceptionHandler(Exception.class)
@@ -106,5 +123,13 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         problem.setTitle(title);
         problem.setDetail(detail);
         return problem;
+    }
+
+    private List<Problem.Field> getProblemFields(MethodArgumentNotValidException ex) {
+        BindingResult errors = ex.getBindingResult();
+        List<Problem.Field> problemFields = errors.getFieldErrors().stream()
+                .map(f -> new Problem.Field(f.getField(), f.getDefaultMessage()))
+                .collect(Collectors.toList());
+        return problemFields;
     }
 }

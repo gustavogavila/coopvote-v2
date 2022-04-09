@@ -22,6 +22,10 @@ public interface AgendaControllerOpenApi {
             @ApiResponse(responseCode = "201", description = "New agenda created",
                     content = { @Content(mediaType = "application/json",
                             schema = @Schema(implementation = AgendaResponse.class)) }),
+            @ApiResponse(responseCode = "400", description = "Invalid data",
+                    content = {
+                            @Content(mediaType = "application/json", schema = @Schema(implementation = Problem.class))
+                    }),
             @ApiResponse(responseCode = "400", description = "Bad request",
                     content = {
                             @Content(mediaType = "application/json", schema = @Schema(implementation = Problem.class))
@@ -42,6 +46,10 @@ public interface AgendaControllerOpenApi {
     @Operation(summary = "Open voting session for an agenda")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Voting session opened"),
+            @ApiResponse(responseCode = "400", description = "Invalid data",
+                    content = {
+                            @Content(mediaType = "application/json", schema = @Schema(implementation = Problem.class))
+                    }),
             @ApiResponse(responseCode = "400", description = "Bad request",
                     content = {
                             @Content(mediaType = "application/json", schema = @Schema(implementation = Problem.class))
