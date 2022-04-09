@@ -2,7 +2,6 @@ package com.gustavoavila.coopvote.domain.service;
 
 import com.gustavoavila.coopvote.domain.exceptions.AgendaNotFoundException;
 import com.gustavoavila.coopvote.domain.exceptions.AgendaWithoutVotesException;
-import com.gustavoavila.coopvote.domain.exceptions.DuplicatedVoteException;
 import com.gustavoavila.coopvote.domain.exceptions.VotingSessionNotFoundException;
 import com.gustavoavila.coopvote.domain.model.*;
 import com.gustavoavila.coopvote.domain.repository.AgendaRepository;
@@ -21,7 +20,6 @@ import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
@@ -101,22 +99,10 @@ public class AgendaService {
 
     @Transactional
     public void vote(Long agendaId, VoteRequest voteRequest) {
-
         Agenda agenda = findAgendaById(agendaId);
-        verifyDuplicatedVote(voteRequest, agenda);
-
-        VotingSession votingSession = agenda.getVotingSession();
         Vote vote = voteMapper.transform(voteRequest);
         voteRepository.save(vote);
-        votingSession.addVote(vote);
-        votingSessionRepository.save(votingSession);
-    }
-
-    private void verifyDuplicatedVote(VoteRequest voteRequest, Agenda agenda) {
-        Optional<List<Vote>> possibleVote = voteRepository.findByAssociateCPFAndAgenda(voteRequest.getAssociateCPF(), agenda.getId());
-        if (possibleVote.isPresent() && !possibleVote.get().isEmpty()) {
-            throw new DuplicatedVoteException();
-        }
+        agenda.addVote(vote);
     }
 
     public VotingResult votingResult(Long agendaId) {

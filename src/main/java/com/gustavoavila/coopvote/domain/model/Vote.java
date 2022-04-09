@@ -18,6 +18,7 @@ public class Vote {
     @Enumerated(EnumType.STRING)
     private VoteValue voteValue;
 
+    @Deprecated
     public Vote() {
     }
 
@@ -28,5 +29,9 @@ public class Vote {
 
     public VoteValue getVoteValue() {
         return voteValue;
+    }
+
+    public String getAssociateCPF() {
+        return associateCPF;
     }
 }
