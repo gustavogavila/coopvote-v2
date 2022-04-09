@@ -21,6 +21,11 @@ server:
   servlet:
     context-path: /api
 
+springdoc:
+  swagger-ui:
+    path: /docs.html
+    operationsSorter: alpha
+
 ---
 
 spring:
@@ -36,3 +41,8 @@ spring:
 server:
   servlet:
     context-path: /api
+
+springdoc:
+  swagger-ui:
+    path: /docs.html
+    operationsSorter: alpha

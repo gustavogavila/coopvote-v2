@@ -1,5 +1,6 @@
 package com.gustavoavila.coopvote.api.controller;
 
+import com.gustavoavila.coopvote.api.controller.openapi.AgendaControllerOpenApi;
 import com.gustavoavila.coopvote.domain.model.*;
 import com.gustavoavila.coopvote.domain.service.AgendaService;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +12,7 @@ import java.net.URI;
 
 @RestController
 @RequestMapping("agendas")
-public class AgendaController {
+public class AgendaController implements AgendaControllerOpenApi {
 
     private final AgendaService agendaService;
 
@@ -31,7 +32,8 @@ public class AgendaController {
     }
 
     @PostMapping("{agendaId}/open-voting-session")
-    public void openVotingSession(@PathVariable Long agendaId, @RequestBody VotingSessionRequest votingSessionRequest) {
+    public void openVotingSession(@PathVariable Long agendaId,
+                                  @RequestBody(required = false) VotingSessionRequest votingSessionRequest) {
         agendaService.openVotingSession(agendaId, votingSessionRequest);
     }
 

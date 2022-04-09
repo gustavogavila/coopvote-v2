@@ -63,12 +63,21 @@ public class AgendaService {
     @Transactional
     public void openVotingSession(Long agendaId, VotingSessionRequest votingSessionRequest) {
         Agenda agenda = findAgendaById(agendaId);
-        VotingSession votingSession = new VotingSession(votingSessionRequest.getSessionTimeInMinutes());
+        int durationInMinutes = getDurationInMinutesIfExist(votingSessionRequest);
+        VotingSession votingSession = new VotingSession(durationInMinutes);
         votingSessionRepository.save(votingSession);
 
         agenda.setVotingSession(votingSession);
         repository.save(agenda);
         closeVotingSession(votingSession);
+    }
+
+    private int getDurationInMinutesIfExist(VotingSessionRequest votingSessionRequest) {
+        var durationInMinutes = 1;
+        if (nonNull(votingSessionRequest)) {
+            durationInMinutes = votingSessionRequest.getSessionTimeInMinutes();
+        }
+        return durationInMinutes;
     }
 
     private Agenda findAgendaById(Long agendaId) {
