@@ -3,6 +3,12 @@ spring:
     active:
       - prod
 
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: admin
+    password: 123456
+
   datasource:
     url: jdbc:postgresql://localhost:15432/coopvotedb
     username: postgres
@@ -30,6 +36,9 @@ springdoc:
 
 spring:
   profiles: prod
+
+  rabbitmq:
+    addresses: ${CLOUDAMQP_URL}
 
   datasource:
     url: ${JDBC_DATASOURCE_URL}

@@ -1,12 +1,12 @@
 package com.gustavoavila.coopvote.domain.service;
 
 import com.gustavoavila.coopvote.domain.exceptions.AgendaNotFoundException;
-import com.gustavoavila.coopvote.domain.exceptions.AgendaWithoutVotesException;
 import com.gustavoavila.coopvote.domain.exceptions.VotingSessionNotFoundException;
 import com.gustavoavila.coopvote.domain.model.*;
 import com.gustavoavila.coopvote.domain.repository.AgendaRepository;
 import com.gustavoavila.coopvote.domain.repository.VoteRepository;
 import com.gustavoavila.coopvote.domain.repository.VotingSessionRepository;
+import com.gustavoavila.coopvote.infra.connections.RabbitMQConstants;
 import com.gustavoavila.coopvote.utils.mapper.AgendaRequestToAgendaMapper;
 import com.gustavoavila.coopvote.utils.mapper.AgendaToAgendaResponseMapper;
 import com.gustavoavila.coopvote.utils.mapper.VoteRequestToVoteMapper;
@@ -37,19 +37,22 @@ public class AgendaService {
     private final VoteRequestToVoteMapper voteMapper;
     private final VoteRepository voteRepository;
     private final AgendaToAgendaResponseMapper agendaResponseMapper;
+    private final RabbitMQService rabbitMQService;
 
     public AgendaService(AgendaRequestToAgendaMapper mapper,
                          AgendaRepository repository,
                          VotingSessionRepository votingSessionRepository,
                          VoteRequestToVoteMapper voteMapper,
                          VoteRepository voteRepository,
-                         AgendaToAgendaResponseMapper agendaResponseMapper) {
+                         AgendaToAgendaResponseMapper agendaResponseMapper,
+                         RabbitMQService rabbitMQService) {
         this.mapper = mapper;
         this.repository = repository;
         this.votingSessionRepository = votingSessionRepository;
         this.voteMapper = voteMapper;
         this.voteRepository = voteRepository;
         this.agendaResponseMapper = agendaResponseMapper;
+        this.rabbitMQService = rabbitMQService;
     }
 
     public AgendaResponse registerNewAgenda(AgendaRequest agendaRequest) {
@@ -94,7 +97,12 @@ public class AgendaService {
         scheduler.schedule(() -> {
             votingSession.close();
             votingSessionRepository.save(votingSession);
+            sendNotification();
         }, closingDate);
+    }
+
+    private void sendNotification() {
+        rabbitMQService.sendMessage(RabbitMQConstants.VOTE_QUEUE, "the agenda voting session was closed.!");
     }
 
     @Transactional
@@ -127,7 +135,7 @@ public class AgendaService {
 
     private FinalResult calculateResult(Long numberYES, Long numberNO) {
         if (numberYES == 0L && numberNO == 0L) {
-            throw new AgendaWithoutVotesException();
+            return FinalResult.DRAW;
         }
         if (numberYES > numberNO) {
             return FinalResult.APPROVED;
