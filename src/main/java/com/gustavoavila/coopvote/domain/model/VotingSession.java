@@ -26,7 +26,7 @@ public class VotingSession {
     private OffsetDateTime sessionOpeningTime;
     private OffsetDateTime sessionClosingTime;
 
-    @OneToMany
+    @OneToMany(fetch = FetchType.EAGER)
     @JoinColumn(name = "voting_session_id")
     private final List<Vote> votes = new ArrayList<>();
 

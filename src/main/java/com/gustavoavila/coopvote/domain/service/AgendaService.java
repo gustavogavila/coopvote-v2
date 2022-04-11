@@ -70,7 +70,7 @@ public class AgendaService {
 
         agenda.setVotingSession(votingSession);
         repository.save(agenda);
-        closeVotingSession(votingSession);
+        closeVotingSession(votingSession, agenda.getId());
     }
 
     private int getDurationInMinutesIfExist(VotingSessionRequest votingSessionRequest) {
@@ -87,7 +87,7 @@ public class AgendaService {
     }
 
     @Async
-    private void closeVotingSession(VotingSession votingSession) {
+    private void closeVotingSession(VotingSession votingSession, Long agendaId) {
         ScheduledExecutorService localExecutor = Executors.newSingleThreadScheduledExecutor();
         TaskScheduler scheduler = new ConcurrentTaskScheduler(localExecutor);
 
@@ -97,12 +97,26 @@ public class AgendaService {
         scheduler.schedule(() -> {
             votingSession.close();
             votingSessionRepository.save(votingSession);
-            sendNotification();
+            sendNotification(agendaId);
         }, closingDate);
     }
 
-    private void sendNotification() {
-        rabbitMQService.sendMessage(RabbitMQConstants.VOTE_QUEUE, "the agenda voting session was closed.!");
+    private void sendNotification(Long agendaId) {
+        VotingResult votingResult = votingResult(agendaId);
+        var message = buildNotificationMessage(votingResult);
+        rabbitMQService.sendMessage(RabbitMQConstants.VOTE_QUEUE, message);
+    }
+
+    private String buildNotificationMessage(VotingResult votingResult) {
+        var agendaDescription = votingResult.getAgendaDescription();
+        var finalResult = votingResult.getFinalResult();
+        var totalVotesYes = votingResult.getTotalVotesYes();
+        var totalVotesNo = votingResult.getTotalVotesNo();
+        return String.format("The agenda %s was %s with %s NO votes and %s YES votes",
+                agendaDescription,
+                finalResult,
+                totalVotesNo,
+                totalVotesYes);
     }
 
     @Transactional
