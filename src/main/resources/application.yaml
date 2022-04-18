@@ -4,13 +4,13 @@ spring:
       - prod
 
   rabbitmq:
-    host: localhost
+    host: ${RABBITMQ_HOST:localhost}
     port: 5672
     username: admin
     password: 123456
 
   datasource:
-    url: jdbc:postgresql://localhost:15432/coopvotedb
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/coopvotedb
     username: postgres
     password: postgres
 
