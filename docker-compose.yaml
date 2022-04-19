@@ -32,8 +32,6 @@ services:
   coopvote:
     image: coopvote
     command: ["/wait-for-it.sh", "-t", "30", "coopvote-postgres:5432", "--", "/wait-for-it.sh", "-t", "30", "coopvote-rabbitmq:5672", "--" , "java", "-jar", "coopvote.jar"]
-    ports:
-      - "8080:8080"
     environment:
       DB_HOST: coopvote-postgres
       RABBITMQ_HOST: coopvote-rabbitmq
@@ -42,3 +40,13 @@ services:
     depends_on:
       - coopvote-postgres
       - coopvote-rabbitmq
+
+  coopvote-nginx-proxy:
+    build: ./nginx
+    image: coopvote-nginx-proxy
+    ports:
+      - "80:80"
+    networks:
+      - coopvote-network
+    depends_on:
+      - coopvote
